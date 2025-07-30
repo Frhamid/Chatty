@@ -2,7 +2,9 @@ import prisma from "../prismaClient/prismaClient.js";
 import bcrypt from "bcrypt";
 
 import jwt from "jsonwebtoken";
+import { upsertStreamUser } from "../lib/stream.js";
 
+//////////////////////////////////////////////////////Signup
 export const signup = async (req, res) => {
   const { email, password, fullName } = req.body;
 
@@ -13,14 +15,15 @@ export const signup = async (req, res) => {
         email: email,
       },
     });
-    console.log("existing email", existingUser);
     if (existingUser) {
       return res.status(400).json({ message: "Email Already exist" });
     }
 
+    //generating random avatar
     const idx = Math.floor(Math.random() * 100) + 1; // genrate number btw 1-100
     const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
 
+    //generating a salt for hashing password
     const salt = await bcrypt.genSalt(10);
     const passwordEncrypt = await bcrypt.hash(password, salt);
 
@@ -34,6 +37,19 @@ export const signup = async (req, res) => {
       data: data,
       omit: { password: true }, //it adds the password in db but ommit to send it back i response
     });
+
+    //Creating a user in stream aswell
+    try {
+      console.log("users id", newUser.id);
+      await upsertStreamUser({
+        id: newUser.id.toString(),
+        name: newUser.fullName,
+        image: newUser.profilePic || "",
+      });
+      console.log(`Stream user created for ${newUser.fullName}`);
+    } catch (error) {
+      console.log("Error creating a stream user", error);
+    }
 
     //generating an jwt auth token
     const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET_KEY, {
@@ -53,11 +69,92 @@ export const signup = async (req, res) => {
   }
 };
 
-export const login = (req, res) => {
-  res.send("login route");
-  res.status(500).json({ message: "Server error" });
+///////////////////////////////////////////////////////////////////////////////login
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    //checking if user email exist in database
+    const user = await prisma.User.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    if (!user)
+      return res.status(400).json({ message: "Invalid Email or Password" });
+
+    //comparing ented password with the one in database
+    const isPasswordcorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordcorrect)
+      return res.status(400).json({ message: "Invalid Email or Password" });
+
+    //generating an jwt auth token
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("jwt", token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true, // prevent xss attack,
+      sameSite: "strict", //prevent CSRF attacks
+      secure: process.env.NODE_ENV === "production", //prevent hrrp requests
+    });
+
+    res.status(200).json({ success: true, user: user.email });
+  } catch (error) {
+    console.log("Error in login controller", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
+////////////////////////////////////////////////////////////logout
 export const logout = (req, res) => {
-  res.send("logout route");
+  res.clearCookie("jwt");
+  res.status(200).json({ success: true, message: "Logout successful" });
+};
+
+////////////////////////////////////////////////////////onboard
+
+export const onboard = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { fullName, bio, nativelanguage, learningLanguage, location } =
+      req.body;
+
+    //updating user data
+    const updatedUser = await prisma.User.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        ...req.body,
+        isOnboarded: true,
+      },
+    });
+
+    if (!updatedUser)
+      return res.status(404).json({ message: "User not found" });
+
+    //updating stream data
+    try {
+      await upsertStreamUser({
+        id: updatedUser.id.toString(),
+        name: updatedUser.fullName,
+        image: updatedUser.profilePic || "",
+      });
+      console.log(
+        `stream user updated after onboarding for ${updatedUser.fullName}`
+      );
+    } catch (streamError) {
+      console.log(
+        "Error updating stream user during onboarding",
+        streamError.message
+      );
+    }
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error("Error in onboarding", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };

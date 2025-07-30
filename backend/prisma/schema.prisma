@@ -16,6 +16,8 @@ model User {
   bio           String?      @default("")
   profilePic    String?      @default("")
   nativeLanguage String?     @default("")
+  learningLanguage String?     @default("")
+  location      String?     @default("")
   isOnboarded   Boolean?     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
