@@ -9,16 +9,41 @@ datasource db {
 
 
 model User {
-  id            String      @id @default(uuid())
-  fullName      String
-  email         String      @unique
-  password      String
-  bio           String?      @default("")
-  profilePic    String?      @default("")
-  nativeLanguage String?     @default("")
-  learningLanguage String?     @default("")
-  location      String?     @default("")
-  isOnboarded   Boolean?     @default(false)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                String       @id @default(uuid())
+  fullName          String
+  email             String       @unique
+  password          String
+  bio               String?      @default("")
+  profilePic        String?      @default("")
+  nativeLanguage    String?      @default("")
+  learningLanguage  String?      @default("")
+  location          String?      @default("")
+  isOnboarded       Boolean?     @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  sentRequests      Friendship[] @relation("sentRequests")
+  receivedRequests  Friendship[] @relation("receivedRequests")
 }
+
+model Friendship {
+  id            String           @id @default(uuid())
+  
+  requester     User             @relation("sentRequests", fields: [requesterId], references: [id])
+  requesterId   String
+
+  receiver      User             @relation("receivedRequests", fields: [receiverId], references: [id])
+  receiverId    String
+
+  status        FriendshipStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([requesterId, receiverId]) // prevent duplicate friendships
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
