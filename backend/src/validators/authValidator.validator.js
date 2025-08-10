@@ -21,7 +21,7 @@ export const loginValidator = [
 ];
 
 export const onBoardValidator = [
-  body("fullName").notEmpty().withMessage("Email is required"),
+  body("fullName").notEmpty().withMessage("Full name is required"),
   body("bio").notEmpty().withMessage("bio is required"),
   body("nativeLanguage").notEmpty().withMessage("nativeLanguage is required"),
   body("learningLanguage")
