@@ -7,7 +7,6 @@ import { upsertStreamUser } from "../lib/stream.js";
 //////////////////////////////////////////////////////Signup
 export const signup = async (req, res) => {
   const { email, password, fullName } = req.body;
-
   try {
     // checking for existing email
     const existingUser = await prisma.User.findUnique({
@@ -16,7 +15,9 @@ export const signup = async (req, res) => {
       },
     });
     if (existingUser) {
-      return res.status(400).json({ message: "Email Already exist" });
+      return res
+        .status(400)
+        .json({ message: "Email already exists, please use a different one" });
     }
 
     //generating random avatar

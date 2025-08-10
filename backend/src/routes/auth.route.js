@@ -20,6 +20,7 @@ router.post("/signup", signupValidator, validateRequest, signup);
 router.post("/login", loginValidator, validateRequest, login);
 
 router.post("/logout", logout);
+
 router.get("/me", protectRoute, (req, res) => {
   res.status(200).json({ success: true, user: req.user });
 });
