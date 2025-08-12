@@ -22,7 +22,7 @@ const App = () => {
     return <Loadercomp />;
   }
   return (
-    <div className=" h-screen " data-theme="dark">
+    <div className=" size-full " data-theme="dark">
       <Routes>
         <Route
           path="/"

@@ -12,6 +12,7 @@ import {
   onBoardValidator,
 } from "../validators/authValidator.validator.js";
 import { validateRequest } from "../middleware/validateRequest.js";
+import { upload } from "../lib/multer.js";
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.get("/me", protectRoute, (req, res) => {
 
 router.post(
   "/onboarding",
+  upload.single("profilePic"),
   protectRoute,
   onBoardValidator,
   validateRequest,

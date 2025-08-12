@@ -10,7 +10,22 @@ export const authuser = async () => {
   return rsp;
 };
 
+// export const onboardingFn = async (onBoardingData) => {
+//   const response = await axiosInstance.post("/auth/onboarding", onBoardingData);
+//   return response;
+// };
 export const onboardingFn = async (onBoardingData) => {
-  const response = await axiosInstance.post("/auth/onboarding", onBoardingData);
+  // const formData = new FormData();
+  // for (let key in onBoardingData) {
+  //   formData.append(key, onBoardingData[key]);
+  // }
+
+  const response = await axiosInstance.post(
+    "/auth/onboarding",
+    onBoardingData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
   return response;
 };
