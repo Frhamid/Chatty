@@ -6,6 +6,7 @@ export const getrecomendedusers = async (req, res) => {
     const currentUser = req.user;
     const relatedFriendships = await prisma.friendship.findMany({
       where: {
+        status: "ACCEPTED",
         OR: [{ requesterId: currentUserId }, { receiverId: currentUserId }],
       },
       select: {
@@ -192,34 +193,44 @@ export const acceptFriendRequest = async (req, res) => {
 
 export const rejectFriendRequest = async (req, res) => {
   try {
-    const currentUserId = req?.user.id;
-    const { id: RequestId } = req?.params;
+    const currentUserId = req.user.id;
+    const { id: RequestId } = req.params;
 
-    const friendRequest = await prisma.friendship.findUnique({
-      where: {
-        id: RequestId,
-        status: "PENDING",
-      },
+    const friendship = await prisma.friendship.findUnique({
+      where: { id: RequestId },
     });
 
-    if (!friendRequest) {
-      res.status(404).json({ message: "Friend Request not found" });
+    if (!friendship) {
+      return res.status(404).json({ message: "Friendship not found" });
     }
 
-    if (friendRequest?.receiverId !== currentUserId) {
-      res.status(403).json({
-        message: "You are not authorized to reject this request",
-      });
+    // Only requester or receiver can delete
+    if (
+      friendship.receiverId !== currentUserId &&
+      friendship.requesterId !== currentUserId
+    ) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this friendship" });
     }
 
-    const rejectReq = await prisma.friendship.delete({
-      where: {
-        id: RequestId,
-      },
+    await prisma.friendship.delete({
+      where: { id: RequestId },
     });
-    res.status(200).json({ success: true, rejectReq });
+
+    let message = "Friendship removed";
+    if (friendship.status === "PENDING") {
+      message =
+        friendship.receiverId === currentUserId
+          ? "Friend request rejected"
+          : "Friend request cancelled";
+    } else if (friendship.status === "ACCEPTED") {
+      message = "Unfriended successfully";
+    }
+
+    res.status(200).json({ success: true, message });
   } catch (error) {
-    console.error("Error Rejecting friend request", error);
+    console.error("Error deleting friendship", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -280,9 +291,6 @@ export const getSentFriendRequests = async (req, res) => {
         },
       },
     });
-    if (!sentFriendRequests.length) {
-      res.status(404).json({ message: "No requests sent by this customer" });
-    }
     res.status(200).json({ success: true, sentFriendRequests });
   } catch (error) {
     console.error("Error fetching Sent Requests", error);

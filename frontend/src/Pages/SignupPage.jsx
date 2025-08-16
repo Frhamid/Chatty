@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router";
 // import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { signup } from "../lib/api";
+import useSignup from "../Hooks/useSignup";
 
 const SignupPage = () => {
   const [signupData, setSignupData] = useState({
@@ -12,20 +13,8 @@ const SignupPage = () => {
     email: "",
     password: "",
   });
-  const [redirect, setRedirect] = useState(false);
 
-  const queryClient = useQueryClient();
-  const {
-    mutate: signupMutation,
-    error,
-    isPending,
-  } = useMutation({
-    mutationFn: signup,
-    onSuccess: () => {
-      setRedirect(true);
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
-  });
+  const { signupMutation, error, isPending, redirect } = useSignup();
   const handleSignup = (e) => {
     e.preventDefault();
     signupMutation(signupData);

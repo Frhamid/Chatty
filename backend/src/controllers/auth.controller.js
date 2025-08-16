@@ -5,6 +5,12 @@ import jwt from "jsonwebtoken";
 import { upsertStreamUser } from "../lib/stream.js";
 import cloudinary from "../lib/cloudinary.js";
 
+import multer from "multer";
+import streamifier from "streamifier";
+
+const storage = multer.memoryStorage();
+export const upload = multer({ storage });
+
 //////////////////////////////////////////////////////Signup
 export const signup = async (req, res) => {
   const { email, password, fullName } = req.body;
@@ -115,67 +121,45 @@ export const logout = (req, res) => {
   res.status(200).json({ success: true, message: "Logout successful" });
 };
 
+////////////////////////////////////////////////////////theme
+export const updatetheme = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { theme } = req?.body;
+    const updatedTheme = await prisma.User.update({
+      where: { id: userId },
+      data: {
+        theme: theme,
+      },
+    });
+    res.status(200).json({ success: true, theme: updatedTheme.theme });
+  } catch (error) {
+    console.log("Error in update theme controller", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 ////////////////////////////////////////////////////////onboard
-
-// export const onboard = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-
-//     const { fullName, bio, nativelanguage, learningLanguage, location } =
-//       req.body;
-
-//     //updating user data
-//     const updatedUser = await prisma.User.update({
-//       where: {
-//         id: userId,
-//       },
-//       data: {
-//         ...req.body,
-//         isOnboarded: true,
-//       },
-//     });
-
-//     if (!updatedUser)
-//       return res.status(404).json({ message: "User not found" });
-
-//     //updating stream data
-//     try {
-//       await upsertStreamUser({
-//         id: updatedUser.id.toString(),
-//         name: updatedUser.fullName,
-//         image: updatedUser.profilePic || "",
-//       });
-//       console.log(
-//         `stream user updated after onboarding for ${updatedUser.fullName}`
-//       );
-//     } catch (streamError) {
-//       console.log(
-//         "Error updating stream user during onboarding",
-//         streamError.message
-//       );
-//     }
-//     res.status(200).json({ success: true, user: updatedUser });
-//   } catch (error) {
-//     console.error("Error in onboarding", error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// };
-
-import multer from "multer";
-import streamifier from "streamifier";
-
-// import cloudinary from "../config/cloudinary.js"; // adjust path
-
-const storage = multer.memoryStorage();
-export const upload = multer({ storage });
 
 export const onboard = async (req, res) => {
   try {
     const userId = req.user.id;
-    let profilePicUrl = req.body.profilePic || "";
 
-    // If file is uploaded, send to Cloudinary
+    // Fetch current user to check existing image
+    const existingUser = await prisma.User.findUnique({
+      where: { id: userId },
+      select: { profilePic: true, profilePicPublicId: true },
+    });
+
+    let profilePicUrl = existingUser?.profilePic || "";
+    let profilePicPublicId = existingUser?.profilePicPublicId || "";
+
     if (req.file) {
+      // delete old cloudinary image if exists
+      if (profilePicPublicId) {
+        await cloudinary.uploader.destroy(profilePicPublicId);
+      }
+      // upload new one
       const result = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: "profile_pics" },
@@ -186,22 +170,31 @@ export const onboard = async (req, res) => {
         );
         streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
       });
+
       profilePicUrl = result.secure_url;
+      profilePicPublicId = result.public_id;
+    } else if (req.body.profilePic && req.body.profilePic !== profilePicUrl) {
+      // New random avatar (not Cloudinary)
+      if (profilePicPublicId) {
+        // delete old cloudinary image
+        await cloudinary.uploader.destroy(profilePicPublicId);
+      }
+      profilePicUrl = req.body.profilePic;
+      profilePicPublicId = "";
     }
 
+    // Update DB
     const updatedUser = await prisma.User.update({
       where: { id: userId },
       data: {
         ...req.body,
         profilePic: profilePicUrl,
+        profilePicPublicId,
         isOnboarded: true,
       },
     });
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
+    // Update Stream user
     try {
       await upsertStreamUser({
         id: updatedUser.id.toString(),
