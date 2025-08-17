@@ -1,6 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect } from "react";
-import { acceptFriendRequest, getFriendRequests } from "../lib/api";
 import {
   BellIcon,
   ClockIcon,
@@ -15,11 +12,15 @@ import useReceivedRequest from "../Hooks/useReceivedRequest";
 import useAcceptRequest from "../Hooks/useAcceptRequest";
 
 const NotificationsPage = () => {
+  //hook for fetching received friend requests
   const { friendRequests, isLoading } = useReceivedRequest();
+  //hook for accepting friend request
   const { acceptRequestMutation, isPending } = useAcceptRequest();
+  //hook for Rejecting/canceling friend request
   const { cancelRequestMutation, pendingCancel } = useCancelRequest();
-  const incomingRequests = friendRequests?.data?.incomingReqs || [];
-  const acceptedRequests = friendRequests?.data?.acceptedReqs || [];
+
+  const incomingRequests = friendRequests?.data?.incomingReqs || []; //for showing requests that current user has received
+  const acceptedRequests = friendRequests?.data?.acceptedReqs || []; //for showing notification current user request that are accepted
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="container mx-auto max-w-4xl space-y-8">

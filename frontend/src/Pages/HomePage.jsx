@@ -1,12 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import {
-  getRecommendedUsers,
-  getSentRequests,
-  getUserFriends,
-  sendFriendRequest,
-} from "../lib/api";
-
 import { capitialize } from "../Utility/helper";
 import { getLanguageFlag } from "../Utility/utility";
 import { Link } from "react-router";
@@ -17,40 +9,45 @@ import useCancelRequest from "../Hooks/useCancelRequest";
 import { useRequestStore } from "../store/useThemeStore ";
 import useReceivedRequest from "../Hooks/useReceivedRequest";
 import useAcceptRequest from "../Hooks/useAcceptRequest";
+import useFetchUserFriends from "../Hooks/useFetchUserFriends";
+import useFetchRecommUsers from "../Hooks/useFetchRecommUsers";
+import useFetchSentRequests from "../Hooks/useFetchSentRequests";
+import useSendRequest from "../Hooks/useSendRequest";
 
 const HomePage = () => {
+  // set for storing user ids of users to whome current user has sent request
   const [sentFriendRequestIds, setSentFriendRequestIds] = useState(new Set());
-  const queryClient = useQueryClient();
 
-  const { data: userFriends, isLoading: loadingFriends } = useQuery({
-    queryKey: ["getFriends"],
-    queryFn: getUserFriends,
-  });
+  //hook for fetching friends
+  const { userFriends, loadingFriends } = useFetchUserFriends();
 
-  const { data: recommendedUsers, isLoading: loadingUsers } = useQuery({
-    queryKey: ["recomendedUsers"],
-    queryFn: getRecommendedUsers,
-  });
-  const { data: sentRequests } = useQuery({
-    queryKey: ["requestsSent"],
-    queryFn: getSentRequests,
-  });
+  //hook for fetching recomended users
+  const { recommendedUsers, loadingUsers } = useFetchRecommUsers();
 
-  const { mutate: sendRequestMutation, isPending } = useMutation({
-    mutationFn: sendFriendRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requestsSent"] });
-    },
-  });
+  //hook for fetching requests sent by current user
+  const { sentRequests } = useFetchSentRequests();
+
+  //hook for sending a friend request
+  const { sendRequestMutation, isPending } = useSendRequest();
+
+  //hook for canceling/rejecting a friend request
   const { cancelRequestMutation } = useCancelRequest();
-  const { Requests, setRequests } = useRequestStore();
+
+  //hook for fetching received friend requests
   const { friendRequests } = useReceivedRequest();
+
+  //hook for accepting request
   const { acceptRequestMutation } = useAcceptRequest();
+
+  //request count in zustand store
+  const { Requests, setRequests } = useRequestStore();
+
+  //setting request count for showing as
   useEffect(() => {
-    console.log("value of data");
     setRequests(friendRequests?.data?.incomingReqs?.length);
   }, [friendRequests?.data?.incomingReqs]);
 
+  //storing the ids of users in a set to whom current user has sent request
   useEffect(() => {
     const outgoingRequestIds = new Set();
     if (
@@ -63,6 +60,7 @@ const HomePage = () => {
     }
     setSentFriendRequestIds(outgoingRequestIds);
   }, [sentRequests]);
+
   return (
     // friends section and and requests button
     <div className="p-4 sm:p-6 lg:p-8">

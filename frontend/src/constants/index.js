@@ -15,11 +15,6 @@ export const THEMES = [
     colors: ["#f5f5f4", "#65c3c8", "#ef9fbc", "#291334"],
   },
   {
-    name: "forest",
-    label: "Forest",
-    colors: ["#1f1d1d", "#3ebc96", "#70c217", "#e2e8f0"],
-  },
-  {
     name: "bumblebee",
     label: "Bumblebee",
     colors: ["#ffffff", "#f8e36f", "#f0d50c", "#1c1917"],
@@ -64,7 +59,11 @@ export const THEMES = [
     label: "Garden",
     colors: ["#e9e7e7", "#ec4899", "#16a34a", "#374151"],
   },
-
+  {
+    name: "forest",
+    label: "Forest",
+    colors: ["#1f1d1d", "#3ebc96", "#70c217", "#e2e8f0"],
+  },
   {
     name: "aqua",
     label: "Aqua",

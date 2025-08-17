@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
 import { getFriendRequests } from "../lib/api";
+import { useRequestStore } from "../store/useThemeStore ";
 
 const useReceivedRequest = () => {
   const { data: friendRequests, isLoading } = useQuery({
