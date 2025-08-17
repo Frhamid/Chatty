@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  cancelFriendRequest,
   getRecommendedUsers,
   getSentRequests,
   getUserFriends,
@@ -11,15 +10,13 @@ import {
 import { capitialize } from "../Utility/helper";
 import { getLanguageFlag } from "../Utility/utility";
 import { Link } from "react-router";
-import {
-  CheckCircleIcon,
-  LoaderIcon,
-  MapPinIcon,
-  UserPlusIcon,
-  UsersIcon,
-  CircleX,
-} from "lucide-react";
+import { MapPinIcon, UserPlusIcon, UsersIcon, CircleX } from "lucide-react";
 import NoFriendsFound from "../components/NoFriendsFound";
+import FriendCard from "../components/FriendCard";
+import useCancelRequest from "../Hooks/useCancelRequest";
+import { useRequestStore } from "../store/useThemeStore ";
+import useReceivedRequest from "../Hooks/useReceivedRequest";
+import useAcceptRequest from "../Hooks/useAcceptRequest";
 
 const HomePage = () => {
   const [sentFriendRequestIds, setSentFriendRequestIds] = useState(new Set());
@@ -45,16 +42,17 @@ const HomePage = () => {
       queryClient.invalidateQueries({ queryKey: ["requestsSent"] });
     },
   });
-  const { mutate: cancelRequestMutation } = useMutation({
-    mutationFn: cancelFriendRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requestsSent"] });
-    },
-  });
+  const { cancelRequestMutation } = useCancelRequest();
+  const { Requests, setRequests } = useRequestStore();
+  const { friendRequests } = useReceivedRequest();
+  const { acceptRequestMutation } = useAcceptRequest();
+  useEffect(() => {
+    console.log("value of data");
+    setRequests(friendRequests?.data?.incomingReqs?.length);
+  }, [friendRequests?.data?.incomingReqs]);
 
   useEffect(() => {
     const outgoingRequestIds = new Set();
-    console.log("Sent requests", sentRequests);
     if (
       sentRequests?.data?.sentFriendRequests &&
       sentRequests?.data?.sentFriendRequests?.length > 0
@@ -76,6 +74,11 @@ const HomePage = () => {
           <Link to="/notifications" className="btn btn-outline btn-sm">
             <UsersIcon className="mr-2 size-4" />
             Friend Requests
+            {Requests > 0 && (
+              <span className="badge badge-primary">
+                {Requests > 100 ? "100+" : Requests}
+              </span>
+            )}
           </Link>
         </div>
 
@@ -131,6 +134,11 @@ const HomePage = () => {
                   sentRequests?.data?.sentFriendRequests?.find(
                     (req) => req.receiverId == user.id
                   );
+                const hasRequestBeenReceived =
+                  friendRequests?.data?.incomingReqs.find((friend) => {
+                    return friend?.requesterId == user.id;
+                  });
+
                 return (
                   <div
                     key={user.id}
@@ -138,7 +146,7 @@ const HomePage = () => {
                   >
                     <div className="card-body p-5 space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="avatar size-16 rounded-full">
+                        <div className="avatar size-16 rounded-full overflow-hidden">
                           <img src={user.profilePic} alt={user.fullName} />
                         </div>
 
@@ -173,34 +181,55 @@ const HomePage = () => {
 
                       {/* Action button */}
 
-                      <button
-                        className={`btn w-full mt-2 ${
-                          isPending
-                            ? "btn-disabled"
-                            : hasRequestBeenSent
-                            ? " btn-error"
-                            : "btn-primary"
-                        }`}
-                        onClick={
-                          () =>
-                            hasRequestBeenSent
-                              ? cancelRequestMutation(currentRequest.id) // cancel if already sent
-                              : sendRequestMutation(user.id) // send otherwise
-                        }
-                        disabled={isPending}
-                      >
-                        {hasRequestBeenSent ? (
-                          <>
-                            <CircleX className="size-4 mr-2" />
-                            Cancel Request
-                          </>
-                        ) : (
-                          <>
-                            <UserPlusIcon className="size-4 mr-2" />
-                            Send Friend Request
-                          </>
-                        )}
-                      </button>
+                      {hasRequestBeenReceived?.requesterId == user.id ? (
+                        <div className="flex flex-row gap-2 w-full mt-2">
+                          <button
+                            className="btn btn-error flex-1"
+                            onClick={() =>
+                              cancelRequestMutation(hasRequestBeenReceived.id)
+                            }
+                          >
+                            Reject
+                          </button>
+                          <button
+                            className="btn btn-primary flex-1"
+                            onClick={() =>
+                              acceptRequestMutation(hasRequestBeenReceived.id)
+                            }
+                          >
+                            Accept
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className={`btn w-full mt-2 ${
+                            isPending
+                              ? "btn-disabled"
+                              : hasRequestBeenSent
+                              ? " btn-error"
+                              : "btn-primary"
+                          }`}
+                          onClick={
+                            () =>
+                              hasRequestBeenSent
+                                ? cancelRequestMutation(currentRequest.id) // cancel if already sent
+                                : sendRequestMutation(user.id) // send otherwise
+                          }
+                          disabled={isPending}
+                        >
+                          {hasRequestBeenSent ? (
+                            <>
+                              <CircleX className="size-4 mr-2" />
+                              Cancel Request
+                            </>
+                          ) : (
+                            <>
+                              <UserPlusIcon className="size-4 mr-2" />
+                              Send Friend Request
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

@@ -66,6 +66,9 @@ export const getMyFriends = async (req, res) => {
             fullName: true,
             email: true,
             profilePic: true,
+            bio: true,
+            nativeLanguage: true,
+            learningLanguage: true,
             // omit password and anything else sensitive
           },
         },
@@ -238,7 +241,7 @@ export const rejectFriendRequest = async (req, res) => {
 export const getFriendRequests = async (req, res) => {
   try {
     const currentUserId = req.user.id;
-    const myFriendRequest = await prisma.friendship.findMany({
+    const incomingReqs = await prisma.friendship.findMany({
       where: {
         receiverId: currentUserId,
         status: "PENDING",
@@ -258,10 +261,27 @@ export const getFriendRequests = async (req, res) => {
         },
       },
     });
-    if (!myFriendRequest.length) {
-      res.status(404).json({ message: "No Friend Requests found" });
-    }
-    res.status(200).json({ success: true, myFriendRequest });
+    const acceptedReqs = await prisma.friendship.findMany({
+      where: {
+        requesterId: currentUserId,
+        status: "ACCEPTED",
+      },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            profilePic: true,
+            bio: true,
+            nativeLanguage: true,
+            learningLanguage: true,
+            // omit password and anything else sensitive
+          },
+        },
+      },
+    });
+    res.status(200).json({ success: true, incomingReqs, acceptedReqs });
   } catch (error) {
     console.error("Error fetching friend requests", error);
     res.status(500).json({ message: "Internal Server Error" });

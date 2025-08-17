@@ -56,13 +56,28 @@ export const getSentRequests = async () => {
   const rsp = await axiosInstance.get("/users/friend-request_sent");
   return rsp;
 };
-export const sendFriendRequest = async (ID) => {
-  const rsp = await axiosInstance.post(`/users/friend-request/${ID}`, {});
+export const sendFriendRequest = async (receiver_id) => {
+  const rsp = await axiosInstance.post(
+    `/users/friend-request/${receiver_id}`,
+    {}
+  );
   return rsp;
 };
-export const cancelFriendRequest = async (ID) => {
+export const cancelFriendRequest = async (req_id) => {
   const rsp = await axiosInstance.delete(
-    `/users/friend-request/${ID}/reject`,
+    `/users/friend-request/${req_id}/reject`,
+    {}
+  );
+  return rsp;
+};
+
+export const getFriendRequests = async () => {
+  const rsp = await axiosInstance.get(`/users/friend-request`);
+  return rsp;
+};
+export const acceptFriendRequest = async (req_id) => {
+  const rsp = await axiosInstance.put(
+    `/users/friend-request/${req_id}/accept`,
     {}
   );
   return rsp;

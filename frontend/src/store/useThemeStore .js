@@ -7,3 +7,10 @@ export const useThemeStore = create((set) => ({
     set(() => ({ theme: newtheme }));
   },
 }));
+
+export const useRequestStore = create((set) => ({
+  Requests: 0,
+  setRequests: (Request) => {
+    set(() => ({ Requests: Request }));
+  },
+}));
