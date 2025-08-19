@@ -13,6 +13,9 @@ const useCancelRequest = () => {
         queryClient.invalidateQueries({
           queryKey: ["getReceivedFriendRequests"],
         });
+        queryClient.invalidateQueries({
+          queryKey: ["getFriends"],
+        });
       },
     });
   return { cancelRequestMutation, pendingCancel };

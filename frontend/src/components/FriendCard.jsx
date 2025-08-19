@@ -1,7 +1,24 @@
 import { Link } from "react-router";
 import { getLanguageFlag } from "../Utility/utility";
+import ConfirmPopup from "./ConfirmPopup";
+import { useState } from "react";
+import useCancelRequest from "../Hooks/useCancelRequest";
 
 const FriendCard = ({ friend }) => {
+  console.log("friend", friend);
+  //hook for removing friend
+  const { cancelRequestMutation } = useCancelRequest();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  const handleConfirmRemove = () => {
+    cancelRequestMutation(friend.requestId);
+    setIsPopupOpen(false);
+  };
+
+  const handleCancel = () => {
+    console.log("inside cancel");
+    setIsPopupOpen(false);
+  };
   return (
     <div className="card bg-base-200 hover:shadow-md transition-shadow">
       <div className="card-body p-4">
@@ -24,11 +41,27 @@ const FriendCard = ({ friend }) => {
           </span>
         </div>
 
-        <Link to={`/chat/${friend.id}`} className="btn btn-outline w-full">
-          Message
-        </Link>
+        <div className="flex gap-2">
+          <Link to={`/chat/${friend.id}`} className="btn btn-outline flex-1">
+            Message
+          </Link>
+          <button
+            className="btn btn-outline flex-1"
+            onClick={() => setIsPopupOpen(true)}
+          >
+            Remove
+          </button>
+        </div>
       </div>
+      {/* ///confirm popup */}
+      <ConfirmPopup
+        isOpen={isPopupOpen}
+        friendName={friend.fullName}
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancel}
+      />
     </div>
   );
 };
+
 export default FriendCard;

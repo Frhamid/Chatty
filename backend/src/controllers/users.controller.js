@@ -89,7 +89,9 @@ export const getMyFriends = async (req, res) => {
 
     // Map to get actual friend (excluding self)
     const friends = friendships.map((f) =>
-      f.requesterId === currentUserId ? f.receiver : f.requester
+      f.requesterId === currentUserId
+        ? { requestId: f.id, ...f.receiver }
+        : { requestId: f.id, ...f.requester }
     );
     res.status(200).json({ success: true, friends: friends });
   } catch (error) {
