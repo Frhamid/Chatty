@@ -15,6 +15,7 @@ import useFetchSentRequests from "../Hooks/useFetchSentRequests";
 import useSendRequest from "../Hooks/useSendRequest";
 
 const HomePage = () => {
+  const [pendingId, setPendingId] = useState(null);
   // set for storing user ids of users to whome current user has sent request
   const [sentFriendRequestIds, setSentFriendRequestIds] = useState(new Set());
 
@@ -41,6 +42,14 @@ const HomePage = () => {
 
   //request count in zustand store
   const { Requests, setRequests } = useRequestStore();
+
+  //useeffect for updating pending state
+  useEffect(() => {
+    if (!isPending) {
+      setPendingId(null);
+      console.log("pending id", pendingId);
+    }
+  }, [isPending]);
 
   //setting request count for showing as
   useEffect(() => {
@@ -200,22 +209,31 @@ const HomePage = () => {
                         </div>
                       ) : (
                         <button
+                          key={user.id}
                           className={`btn w-full mt-2 ${
-                            isPending
+                            isPending && pendingId === user.id
                               ? "btn-disabled"
                               : hasRequestBeenSent
                               ? " btn-error"
                               : "btn-primary"
                           }`}
-                          onClick={
-                            () =>
-                              hasRequestBeenSent
-                                ? cancelRequestMutation(currentRequest.id) // cancel if already sent
-                                : sendRequestMutation(user.id) // send otherwise
+                          onClick={() => {
+                            if (hasRequestBeenSent) {
+                              cancelRequestMutation(currentRequest.id); //cancel is already sent
+                            } else {
+                              setPendingId(user.id);
+                              sendRequestMutation(user.id); //send request
+                            }
+                          }}
+                          disabled={
+                            !hasRequestBeenSent &&
+                            isPending &&
+                            pendingId === user.id
                           }
-                          disabled={isPending}
                         >
-                          {hasRequestBeenSent ? (
+                          {isPending && pendingId === user.id ? (
+                            "Sending..."
+                          ) : hasRequestBeenSent ? (
                             <>
                               <CircleX className="size-4 mr-2" />
                               Cancel Request

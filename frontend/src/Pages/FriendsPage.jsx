@@ -15,15 +15,6 @@ const FriendsPage = () => {
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Your Friends
           </h2>
-          {/* <Link to="/notifications" className="btn btn-outline btn-sm">
-            <UsersIcon className="mr-2 size-4" />
-            Friend Requests
-            {Requests > 0 && (
-              <span className="badge badge-primary">
-                {Requests > 100 ? "100+" : Requests}
-              </span>
-            )}
-          </Link> */}
         </div>
 
         {/* //showing all the loaded friends */}

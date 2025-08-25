@@ -3,7 +3,6 @@ import useAuthUser from "../Hooks/useAuthUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { onboardingFn } from "../lib/api";
-
 import {
   CameraIcon,
   LoaderIcon,
@@ -13,8 +12,10 @@ import {
 } from "lucide-react";
 import { LANGUAGES } from "../constants";
 import LocationSearch from "../components/locationSearch";
+import { useNavigate } from "react-router";
 
-const OnBoardingPage = () => {
+const OnBoardingPage = ({ isEditPage = false }) => {
+  const navigate = useNavigate();
   //city suggestions feature
   const fileInputRef = useRef(null);
   const { authUser } = useAuthUser();
@@ -34,7 +35,9 @@ const OnBoardingPage = () => {
   } = useMutation({
     mutationFn: onboardingFn,
     onSuccess: () => {
-      toast.success("Onboarded successfully");
+      toast.success(
+        isEditPage ? "Profile updated successfully" : "Onboarded successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: (e) => {
@@ -57,8 +60,10 @@ const OnBoardingPage = () => {
     } else {
       formData.append("profilePic", profileData?.profilePic);
     }
-
     await onboardingMutation(formData); // Sends FormData to backend
+    if (isEditPage) {
+      navigate("/");
+    }
   };
 
   const handleRandomAvatar = () => {
@@ -90,7 +95,7 @@ const OnBoardingPage = () => {
       <div className="card bg-base-200 w-full max-w-3xl shadow-xl">
         <div className="card-body p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6">
-            Complete Your Profile
+            {isEditPage ? "Edit" : "Complete"} Your Profile
           </h1>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* PROFILE PIC CONTAINER */}
@@ -239,12 +244,12 @@ const OnBoardingPage = () => {
               {!isPending ? (
                 <>
                   <ShipWheelIcon className="size-5 mr-2" />
-                  Complete Onboarding
+                  {isEditPage ? "Update Profile" : "Complete Onboarding"}
                 </>
               ) : (
                 <>
                   <LoaderIcon className="animate-spin size-5 mr-2" />
-                  Onboarding...
+                  {isEditPage ? "Updating Profile..." : "Onboarding..."}
                 </>
               )}
             </button>

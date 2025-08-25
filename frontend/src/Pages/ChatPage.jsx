@@ -36,7 +36,6 @@ const ChatPage = () => {
     queryFn: getStreamToken,
     enabled: !!authUser, // this will run only when authUser is available
   });
-  console.log("token Data", tokenData);
   useEffect(() => {
     const initChat = async () => {
       if (!tokenData?.data?.token || !authUser) return;
@@ -97,9 +96,6 @@ const ChatPage = () => {
       toast.success("Video call link sent successfully!");
     }
   };
-
-  console.log("chatClient", chatClient);
-  console.log("channel", channel);
 
   if (loading || !chatClient || !channel) return <ChatLoader />;
   return (

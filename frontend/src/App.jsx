@@ -129,7 +129,20 @@ const App = () => {
             )
           }
         />
+        <Route
+          path="/edit-Profile"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSideNav>
+                <OnBoardingPage isEditPage={true} />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboard"} />
+            )
+          }
+        />
       </Routes>
+
       <div>
         <Toaster />
       </div>
