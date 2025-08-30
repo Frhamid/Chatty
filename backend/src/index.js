@@ -46,4 +46,4 @@ const frontendPath = path.join(__dirname, "../../frontend/dist");
 //   // connectDB();
 // });
 
-export default app;
+export default (req, res) => app(req, res);
