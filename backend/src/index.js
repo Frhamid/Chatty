@@ -5,9 +5,9 @@ import chatRoutes from "./routes/chat.route.js";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
+// import path from "path";
 
-const __dirname = path.resolve();
+// const __dirname = path.resolve();
 
 dotenv.config();
 
@@ -28,22 +28,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
 
-const frontendPath = path.join(__dirname, "../../frontend/dist");
-
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(frontendPath));
-
-//   app.use((req, res) => {
-//     res.sendFile(path.join(frontendPath, "index.html"));
-//   });
-// app.get("/*", (req, res) => {
-//   res.sendFile(path.join(frontendPath, "index.html"));
-// });
-// }
-
-// app.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-//   // connectDB();
-// });
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 export default (req, res) => app(req, res);
