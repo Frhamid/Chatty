@@ -101,11 +101,17 @@ export const login = async (req, res) => {
       expiresIn: "7d",
     });
 
+    // res.cookie("jwt", token, {
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    //   httpOnly: true, // prevent xss attack,
+    //   sameSite: "strict", //prevent CSRF attacks
+    //   secure: process.env.NODE_ENV === "production", //prevent hrrp requests
+    // });
     res.cookie("jwt", token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true, // prevent xss attack,
-      sameSite: "strict", //prevent CSRF attacks
-      secure: process.env.NODE_ENV === "production", //prevent hrrp requests
+      httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
     });
 
     res.status(200).json({ success: true, user: user.email });
