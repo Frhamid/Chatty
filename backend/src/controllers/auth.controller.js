@@ -123,7 +123,13 @@ export const login = async (req, res) => {
 
 ////////////////////////////////////////////////////////////logout
 export const logout = (req, res) => {
-  res.clearCookie("jwt");
+  // res.clearCookie("jwt");
+  res.clearCookie("jwt", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/", // ensure path matches original
+  });
   res.status(200).json({ success: true, message: "Logout successful" });
 };
 
